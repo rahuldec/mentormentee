@@ -1,4 +1,4 @@
-import type { ExaminationResult, StudentProfile } from "@/lib/types";
+import type { AttendanceSummary, ExaminationResult, StudentProfile } from "@/lib/types";
 
 const IST = "Asia/Kolkata";
 
@@ -35,11 +35,13 @@ export function ContactCard({
   mentorName,
   profile,
   examinations = [],
+  attendance = null,
 }: {
   rollNo: string;
   mentorName?: string;
   profile: StudentProfile | null;
   examinations?: ExaminationResult[];
+  attendance?: AttendanceSummary | null;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -127,6 +129,52 @@ export function ContactCard({
                           <td className="px-3 py-2 capitalize text-muted">
                             {e.attendance ?? "—"}
                           </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {attendance && attendance.totalLecture > 0 && (
+              <div className="border-b-2 border-accent bg-accent-soft px-6 py-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    Attendance
+                  </h2>
+                  <span
+                    className={`text-lg font-bold ${
+                      attendance.percentage >= 75
+                        ? "text-green-700"
+                        : attendance.percentage >= 50
+                          ? "text-amber-700"
+                          : "text-red-700"
+                    }`}
+                  >
+                    {attendance.percentage}% overall
+                  </span>
+                </div>
+                <div className="overflow-x-auto rounded-md bg-surface">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Subject</th>
+                        <th className="px-3 py-2 font-medium">Lectures</th>
+                        <th className="px-3 py-2 font-medium">Present</th>
+                        <th className="px-3 py-2 font-medium">Absent</th>
+                        <th className="px-3 py-2 font-medium">Leave</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {attendance.subjects.map((s, i) => (
+                        <tr key={i}>
+                          <td className="px-3 py-2 text-foreground">{s.subjectName}</td>
+                          <td className="px-3 py-2 text-muted">{s.lecture}</td>
+                          <td className="px-3 py-2 text-foreground">{s.present}</td>
+                          <td className="px-3 py-2 text-muted">{s.absent}</td>
+                          <td className="px-3 py-2 text-muted">{s.leave}</td>
                         </tr>
                       ))}
                     </tbody>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getRoster } from "@/lib/sheets";
-import { getStudentByRollNo, getExaminationsForStudent } from "@/lib/erp";
+import { getStudentByRollNo, getExaminationsForStudent, getAttendanceForStudent } from "@/lib/erp";
 import { ContactCard } from "@/components/ContactCard";
 
 export default async function MenteePage({
@@ -10,10 +10,11 @@ export default async function MenteePage({
 }) {
   const { rollNo } = await params;
 
-  const [roster, profile, examinations] = await Promise.all([
+  const [roster, profile, examinations, attendance] = await Promise.all([
     getRoster().catch(() => []),
     getStudentByRollNo(rollNo).catch(() => null),
     getExaminationsForStudent(rollNo).catch(() => []),
+    getAttendanceForStudent(rollNo).catch(() => null),
   ]);
 
   const menteeRow = roster.find((r) => r.rollNo === rollNo);
@@ -34,6 +35,7 @@ export default async function MenteePage({
           mentorName={menteeRow?.mentorName}
           profile={profile}
           examinations={examinations}
+          attendance={attendance}
         />
       )}
     </div>

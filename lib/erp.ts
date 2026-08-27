@@ -1,11 +1,12 @@
 import { unstable_cache } from "next/cache";
-import type { ExaminationResult, StudentProfile } from "./types";
+import type { AttendanceSummary, ExaminationResult, StudentProfile } from "./types";
 
 const ENTITY_ID = process.env.ERP_ENTITY_ID;
 const API_TOKEN = process.env.ERP_API_TOKEN;
 const API_URL = "https://others-api.odpay.in/api/list/student";
 const ACADEMIC_API_URL = "https://academic-api.odpay.in/api";
 const SESSION = "2026-27 Odd";
+const SESSION_START = "2026-07-01T00:00:00.000Z";
 
 // First-year courses/streams covering all three source streams (Commerce, BSc+BCA, BA).
 // Scoped to Sem 1 for now — this mirrors the "First Year 2026-27" mentor roster.
@@ -406,4 +407,102 @@ export async function getExaminationsForStudent(rollNo: string): Promise<Examina
   );
 
   return perSubject.flat();
+}
+
+// --- Attendance ---
+//
+// Unlike marks, this is a single call per class/section covering all
+// subjects and a date range -- no per-test iteration needed.
+
+type RawAttendanceRow = {
+  regNo: string;
+  subjectWise: {
+    subjectName: string;
+    subjectCode: string;
+    lecture: number;
+    present: number;
+    absent: number;
+    leave: number;
+  }[];
+  overAll: {
+    totalLecture: number;
+    totalPresent: number;
+    totalAbsent: number;
+    totalLeave: number;
+    percentage: number;
+  };
+};
+
+async function fetchAttendanceUncached(
+  course: string,
+  stream: string,
+  batch: string,
+  section: string,
+  subjectCodes: string[]
+): Promise<RawAttendanceRow[]> {
+  const res = await fetch(`${ACADEMIC_API_URL}/studentWiseNotMarkedReport/studentAttendanceV3`, {
+    method: "POST",
+    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      entity: ENTITY_ID,
+      session: SESSION,
+      course,
+      stream,
+      batch,
+      section,
+      subjects: subjectCodes,
+      startDate: SESSION_START,
+      endDate: new Date().toISOString(),
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Attendance request failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+}
+
+const fetchAttendance = unstable_cache(fetchAttendanceUncached, ["attendance"], {
+  revalidate: 900,
+  tags: ["attendance"],
+});
+
+export async function getAttendanceForStudent(rollNo: string): Promise<AttendanceSummary | null> {
+  const student = await getStudentByRollNo(rollNo);
+  if (!student) return null;
+
+  const map = await fetchSubjectCourseMap();
+  const entry = map.find(
+    (e) =>
+      e.course === student.course &&
+      e.stream === student.stream &&
+      e.batch === student.batch &&
+      e.section === student.section
+  );
+  if (!entry) return null;
+
+  const subjectCodes = entry.subjects.map((s) => s.code);
+  if (subjectCodes.length === 0) return null;
+
+  const rows = await fetchAttendance(entry.course, entry.stream, entry.batch, entry.section, subjectCodes);
+  const mine = rows.find((r) => r.regNo === rollNo);
+  if (!mine) return null;
+
+  return {
+    subjects: mine.subjectWise.map((s) => ({
+      subjectName: s.subjectName,
+      subjectCode: s.subjectCode,
+      lecture: s.lecture,
+      present: s.present,
+      absent: s.absent,
+      leave: s.leave,
+    })),
+    totalLecture: mine.overAll.totalLecture,
+    totalPresent: mine.overAll.totalPresent,
+    totalAbsent: mine.overAll.totalAbsent,
+    totalLeave: mine.overAll.totalLeave,
+    percentage: mine.overAll.percentage,
+  };
 }

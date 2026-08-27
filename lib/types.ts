@@ -13,6 +13,24 @@ export type Remark = {
   fileUrl: string | null;
 };
 
+export type SubjectAttendance = {
+  subjectName: string;
+  subjectCode: string;
+  lecture: number;
+  present: number;
+  absent: number;
+  leave: number;
+};
+
+export type AttendanceSummary = {
+  subjects: SubjectAttendance[];
+  totalLecture: number;
+  totalPresent: number;
+  totalAbsent: number;
+  totalLeave: number;
+  percentage: number;
+};
+
 export type ExaminationResult = {
   subjectName: string;
   topicName: string;
