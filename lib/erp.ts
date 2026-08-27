@@ -1,9 +1,11 @@
 import { unstable_cache } from "next/cache";
-import type { StudentProfile } from "./types";
+import type { ExaminationResult, StudentProfile } from "./types";
 
 const ENTITY_ID = process.env.ERP_ENTITY_ID;
 const API_TOKEN = process.env.ERP_API_TOKEN;
 const API_URL = "https://others-api.odpay.in/api/list/student";
+const ACADEMIC_API_URL = "https://academic-api.odpay.in/api";
+const SESSION = "2026-27 Odd";
 
 // First-year courses/streams covering all three source streams (Commerce, BSc+BCA, BA).
 // Scoped to Sem 1 for now — this mirrors the "First Year 2026-27" mentor roster.
@@ -206,4 +208,202 @@ export async function getAllStudents(): Promise<StudentProfile[]> {
 export async function getStudentByRollNo(rollNo: string): Promise<StudentProfile | null> {
   const students = await fetchAllStudents();
   return students.find((s) => s.regNo === rollNo) ?? null;
+}
+
+// --- Examinations (class tests) ---
+//
+// There's no single "get a student's marks" endpoint. The real UI drives
+// three calls in sequence: a course->subjects map, a per-subject list of
+// tests, then per-test student marks (unfiltered by declaration status —
+// obtainedMarks is present on the record as soon as it's entered).
+
+type RawSubject = {
+  mode?: string;
+  sendHomeWorkReport?: boolean;
+  _id: string;
+  subjectType?: string;
+  name: string;
+  code: string;
+  assessmentModel?: string;
+  employees?: unknown[];
+  displayName?: string;
+  sequenceNo?: number;
+};
+
+type CourseSubjectMapEntry = {
+  course: string;
+  stream: string;
+  batch: string;
+  section: string;
+  subjects: RawSubject[];
+};
+
+type RawExamTopic = {
+  topicName: string;
+  studentCount: number;
+  testDate: string | null;
+  totalMarks: number;
+  resultDeclared: boolean;
+};
+
+type RawStudentMarkRow = {
+  studentRegNo: string;
+  obtainedMarks?: number;
+  attendance?: string;
+};
+
+function decodeTokenEmployeeId(token: string): string {
+  const payload = token.split(".")[1];
+  const json = Buffer.from(payload, "base64").toString("utf-8");
+  return JSON.parse(json).employee;
+}
+
+async function fetchSubjectCourseMapUncached(): Promise<CourseSubjectMapEntry[]> {
+  if (!ENTITY_ID || !API_TOKEN) {
+    throw new Error("ERP_ENTITY_ID or ERP_API_TOKEN is not set");
+  }
+
+  const url = new URL(`${ACADEMIC_API_URL}/getCoursesByTeacher/subjectCourseMapping`);
+  url.searchParams.set("entity", ENTITY_ID);
+  url.searchParams.set("session", SESSION);
+  url.searchParams.set("teacher", decodeTokenEmployeeId(API_TOKEN));
+  url.searchParams.set("isAdmin", "true");
+  url.searchParams.set("attendanceType", "lectureWise");
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: API_TOKEN },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Subject map request failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+}
+
+const fetchSubjectCourseMap = unstable_cache(
+  fetchSubjectCourseMapUncached,
+  ["subject-course-map"],
+  { revalidate: 3600, tags: ["subject-course-map"] }
+);
+
+async function fetchExamTopicsUncached(
+  course: string,
+  stream: string,
+  batch: string,
+  section: string,
+  subject: RawSubject
+): Promise<RawExamTopic[]> {
+  const res = await fetch(`${ACADEMIC_API_URL}/getTopics/classTest`, {
+    method: "POST",
+    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    body: JSON.stringify({ entity: ENTITY_ID, session: SESSION, course, stream, batch, section, subject }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Exam topics request failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+}
+
+const fetchExamTopics = unstable_cache(fetchExamTopicsUncached, ["exam-topics"], {
+  revalidate: 900,
+  tags: ["exam-topics"],
+});
+
+async function fetchExamMarksUncached(
+  course: string,
+  stream: string,
+  batch: string,
+  section: string,
+  subject: RawSubject,
+  topicName: string
+): Promise<RawStudentMarkRow[]> {
+  const res = await fetch(`${ACADEMIC_API_URL}/getStudents/classTest`, {
+    method: "POST",
+    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      entity: ENTITY_ID,
+      session: SESSION,
+      course,
+      stream,
+      batch,
+      section,
+      subject,
+      topicName,
+    }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`Exam marks request failed: ${res.status} ${res.statusText}`);
+  }
+
+  return res.json();
+}
+
+const fetchExamMarks = unstable_cache(fetchExamMarksUncached, ["exam-marks"], {
+  revalidate: 900,
+  tags: ["exam-marks"],
+});
+
+export async function getExaminationsForStudent(rollNo: string): Promise<ExaminationResult[]> {
+  const student = await getStudentByRollNo(rollNo);
+  if (!student) return [];
+
+  const map = await fetchSubjectCourseMap();
+  const entry = map.find(
+    (e) =>
+      e.course === student.course &&
+      e.stream === student.stream &&
+      e.batch === student.batch &&
+      e.section === student.section
+  );
+  if (!entry) return [];
+
+  const perSubject = await Promise.all(
+    entry.subjects.map(async (subject) => {
+      const topics = await fetchExamTopics(
+        entry.course,
+        entry.stream,
+        entry.batch,
+        entry.section,
+        subject
+      ).catch(() => []);
+
+      const perTopic = await Promise.all(
+        topics.map(async (topic) => {
+          const rows = await fetchExamMarks(
+            entry.course,
+            entry.stream,
+            entry.batch,
+            entry.section,
+            subject,
+            topic.topicName
+          ).catch(() => []);
+
+          const mine = rows.find((r) => r.studentRegNo === rollNo);
+          if (!mine || mine.obtainedMarks === undefined) return null;
+
+          const result: ExaminationResult = {
+            subjectName: subject.name,
+            topicName: topic.topicName,
+            testDate: topic.testDate,
+            totalMarks: topic.totalMarks,
+            obtainedMarks: mine.obtainedMarks,
+            attendance: mine.attendance ?? null,
+            resultDeclared: topic.resultDeclared,
+          };
+          return result;
+        })
+      );
+
+      return perTopic.filter((r): r is ExaminationResult => r !== null);
+    })
+  );
+
+  return perSubject.flat();
 }

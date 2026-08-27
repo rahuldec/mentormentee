@@ -13,6 +13,16 @@ export type Remark = {
   fileUrl: string | null;
 };
 
+export type ExaminationResult = {
+  subjectName: string;
+  topicName: string;
+  testDate: string | null;
+  totalMarks: number;
+  obtainedMarks: number | null;
+  attendance: string | null;
+  resultDeclared: boolean;
+};
+
 export type StudentProfile = {
   regNo: string;
   applicationNumber: string | null;
