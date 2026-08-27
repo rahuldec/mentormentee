@@ -251,8 +251,8 @@ function Field({
   if (!value) return null;
   return (
     <div className={span ? "sm:col-span-3" : undefined}>
-      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 text-sm text-foreground">
+      <dt className="text-xs uppercase tracking-wide text-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium text-foreground">
         {href ? (
           <a href={href} className="text-accent hover:underline">
             {value}
