@@ -2,9 +2,10 @@ import { getRoster } from "@/lib/sheets";
 import { RosterExplorer } from "@/components/RosterExplorer";
 import { RefreshButton } from "@/components/RefreshButton";
 import { StatCard } from "@/components/StatCard";
+import type { MenteeRow } from "@/lib/types";
 
 export default async function Home() {
-  let rows;
+  let rows: MenteeRow[] = [];
   let error: string | null = null;
 
   try {
@@ -13,7 +14,7 @@ export default async function Home() {
     error = e instanceof Error ? e.message : "Failed to load roster";
   }
 
-  const mentorCount = rows ? new Set(rows.map((r) => r.mentorName)).size : 0;
+  const mentorCount = new Set(rows.map((r) => r.mentorName)).size;
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-10">
@@ -34,14 +35,14 @@ export default async function Home() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <StatCard label="Mentees" value={rows?.length ?? 0} />
+            <StatCard label="Mentees" value={rows.length} />
             <StatCard label="Mentors" value={mentorCount} />
             <StatCard
               label="Avg. per mentor"
-              value={mentorCount ? Math.round((rows?.length ?? 0) / mentorCount) : 0}
+              value={mentorCount ? Math.round(rows.length / mentorCount) : 0}
             />
           </div>
-          <RosterExplorer rows={rows ?? []} />
+          <RosterExplorer rows={rows} />
         </>
       )}
     </div>
