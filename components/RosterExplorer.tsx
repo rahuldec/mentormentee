@@ -93,7 +93,7 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-border bg-slate-50 text-xs uppercase tracking-wide text-muted">
+            <thead className="border-b border-border bg-background text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">Roll No.</th>
                 <th className="px-4 py-2.5 font-medium">Mentor</th>
@@ -103,7 +103,7 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
             </thead>
             <tbody className="divide-y divide-border">
               {pageRows.map((r) => (
-                <tr key={r.rollNo} className="hover:bg-slate-50">
+                <tr key={r.rollNo} className="hover:bg-background">
                   <td className="px-4 py-2.5">
                     <Link
                       href={`/mentee/${r.rollNo}`}
@@ -144,14 +144,14 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="rounded-md border border-border px-2.5 py-1 text-foreground hover:bg-slate-50 disabled:opacity-40"
+                className="rounded-md border border-border px-2.5 py-1 text-foreground hover:bg-background disabled:opacity-40"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="rounded-md border border-border px-2.5 py-1 text-foreground hover:bg-slate-50 disabled:opacity-40"
+                className="rounded-md border border-border px-2.5 py-1 text-foreground hover:bg-background disabled:opacity-40"
               >
                 Next
               </button>

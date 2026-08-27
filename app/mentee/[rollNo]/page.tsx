@@ -18,8 +18,8 @@ export default async function MenteePage({
   const menteeRow = roster.find((r) => r.rollNo === rollNo);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
-      <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-700">
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
+      <Link href="/" className="text-sm text-muted hover:text-foreground">
         ← Back to roster
       </Link>
 

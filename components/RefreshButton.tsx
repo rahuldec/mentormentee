@@ -21,7 +21,7 @@ export function RefreshButton() {
     <button
       onClick={handleRefresh}
       disabled={loading}
-      className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground hover:bg-slate-50 disabled:opacity-50"
+      className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background disabled:opacity-50"
     >
       <svg
         className={loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"}
