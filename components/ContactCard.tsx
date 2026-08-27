@@ -93,12 +93,52 @@ export function ContactCard({
 
         {profile && (
           <>
+            {examinations.length > 0 && (
+              <div className="border-b-2 border-accent bg-accent-soft px-6 py-5">
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-accent">
+                  <span className="h-2 w-2 rounded-full bg-accent" />
+                  Examinations
+                </h2>
+                <div className="overflow-x-auto rounded-md bg-surface">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border text-xs uppercase tracking-wide text-muted">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Subject</th>
+                        <th className="px-3 py-2 font-medium">Examination</th>
+                        <th className="px-3 py-2 font-medium">Date</th>
+                        <th className="px-3 py-2 font-medium">Marks</th>
+                        <th className="px-3 py-2 font-medium">Attendance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {examinations.map((e, i) => (
+                        <tr key={i}>
+                          <td className="px-3 py-2 text-foreground">{e.subjectName}</td>
+                          <td className="px-3 py-2 text-foreground">{e.topicName}</td>
+                          <td className="px-3 py-2 text-muted">{formatDate(e.testDate) ?? "—"}</td>
+                          <td className="px-3 py-2 font-semibold text-foreground">
+                            {e.obtainedMarks} / {e.totalMarks}
+                            {!e.resultDeclared && (
+                              <span className="ml-2 align-middle">
+                                <Badge tone="neutral">Pending declaration</Badge>
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 capitalize text-muted">
+                            {e.attendance ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <Section title="Contact">
               <Field label="Phone" value={profile.phone} href={`tel:${profile.phone}`} />
               <Field label="Email" value={profile.email} href={`mailto:${profile.email}`} />
               <Field label="Address" value={profile.address} span />
-              <Field label="State" value={profile.state} />
-              <Field label="Country" value={profile.country} />
               <Field label="Pin Code" value={profile.pinCode} />
             </Section>
 
@@ -128,44 +168,6 @@ export function ContactCard({
               <Field label="Application No." value={profile.applicationNumber} />
               <Field label="Date of Admission" value={formatDate(profile.doa)} />
             </Section>
-
-            {examinations.length > 0 && (
-              <Section title="Examinations">
-                <div className="col-span-full overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="text-xs uppercase tracking-wide text-muted">
-                      <tr>
-                        <th className="py-1.5 pr-4 font-medium">Subject</th>
-                        <th className="py-1.5 pr-4 font-medium">Examination</th>
-                        <th className="py-1.5 pr-4 font-medium">Date</th>
-                        <th className="py-1.5 pr-4 font-medium">Marks</th>
-                        <th className="py-1.5 pr-4 font-medium">Attendance</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {examinations.map((e, i) => (
-                        <tr key={i}>
-                          <td className="py-2 pr-4 text-foreground">{e.subjectName}</td>
-                          <td className="py-2 pr-4 text-foreground">{e.topicName}</td>
-                          <td className="py-2 pr-4 text-muted">{formatDate(e.testDate) ?? "—"}</td>
-                          <td className="py-2 pr-4 font-medium text-foreground">
-                            {e.obtainedMarks} / {e.totalMarks}
-                            {!e.resultDeclared && (
-                              <span className="ml-2 align-middle">
-                                <Badge tone="neutral">Pending declaration</Badge>
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-2 pr-4 capitalize text-muted">
-                            {e.attendance ?? "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Section>
-            )}
 
             {(profile.education10.school || profile.education10.obtainedMarks) && (
               <Section title="Class X">
