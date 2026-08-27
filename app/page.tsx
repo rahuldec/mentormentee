@@ -1,4 +1,5 @@
 import { getRoster } from "@/lib/sheets";
+import { getAllStudents } from "@/lib/erp";
 import { RosterExplorer } from "@/components/RosterExplorer";
 import { RefreshButton } from "@/components/RefreshButton";
 import { StatCard } from "@/components/StatCard";
@@ -14,6 +15,12 @@ export default async function Home() {
     error = e instanceof Error ? e.message : "Failed to load roster";
   }
 
+  // Student names live in the ERP, not the roster sheet. Join them in by
+  // roll number; if the ERP call fails, the roster still renders without names.
+  const students = await getAllStudents().catch(() => []);
+  const namesByRollNo = new Map(students.map((s) => [s.regNo, s.name]));
+  rows = rows.map((r) => ({ ...r, studentName: namesByRollNo.get(r.rollNo) }));
+
   const mentorCount = new Set(rows.map((r) => r.mentorName)).size;
 
   return (
@@ -22,7 +29,7 @@ export default async function Home() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Roster</h1>
           <p className="mt-1 text-sm text-muted">
-            Search mentees by roll number, filter by mentor.
+            Search mentees by name or roll number, filter by mentor.
           </p>
         </div>
         <RefreshButton />

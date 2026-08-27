@@ -3,6 +3,7 @@ export type MenteeRow = {
   subject: string;
   srNo: number;
   rollNo: string;
+  studentName?: string;
 };
 
 export type Remark = {

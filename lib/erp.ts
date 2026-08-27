@@ -199,6 +199,10 @@ const fetchAllStudents = unstable_cache(fetchAllStudentsUncached, ["erp-students
   tags: ["erp-students-v2"],
 });
 
+export async function getAllStudents(): Promise<StudentProfile[]> {
+  return fetchAllStudents();
+}
+
 export async function getStudentByRollNo(rollNo: string): Promise<StudentProfile | null> {
   const students = await fetchAllStudents();
   return students.find((s) => s.regNo === rollNo) ?? null;

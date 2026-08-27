@@ -30,7 +30,10 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
       const matchesMentor = mentor === "all" || r.mentorName === mentor;
-      const matchesQuery = !q || r.rollNo.toLowerCase().includes(q);
+      const matchesQuery =
+        !q ||
+        r.rollNo.toLowerCase().includes(q) ||
+        r.studentName?.toLowerCase().includes(q);
       return matchesMentor && matchesQuery;
     });
   }, [rows, query, mentor]);
@@ -67,7 +70,7 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
           </svg>
           <input
             type="text"
-            placeholder="Search by roll no."
+            placeholder="Search by name or roll no."
             value={query}
             onChange={(e) => updateQuery(e.target.value)}
             className="w-full rounded-md border border-border bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-accent"
@@ -96,6 +99,7 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
             <thead className="border-b border-border bg-background text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">Roll No.</th>
+                <th className="px-4 py-2.5 font-medium">Name</th>
                 <th className="px-4 py-2.5 font-medium">Mentor</th>
                 <th className="px-4 py-2.5 font-medium">Subject</th>
                 <th className="px-4 py-2.5 font-medium">Sr No.</th>
@@ -112,6 +116,9 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
                       {r.rollNo}
                     </Link>
                   </td>
+                  <td className="px-4 py-2.5 font-medium text-foreground">
+                    {r.studentName ?? <span className="text-muted">—</span>}
+                  </td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[10px] font-semibold text-accent">
@@ -126,7 +133,7 @@ export function RosterExplorer({ rows }: { rows: MenteeRow[] }) {
               ))}
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-muted">
+                  <td colSpan={5} className="px-4 py-10 text-center text-muted">
                     No mentees match this search.
                   </td>
                 </tr>
