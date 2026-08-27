@@ -44,16 +44,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         <main className="flex flex-1 flex-col">{children}</main>
         <footer className="border-t border-border bg-surface px-6 py-8">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-2">
-            <div className="flex items-center gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://okiedokie-erp-images.s3.ap-south-1.amazonaws.com/Okie%20Dokie/2020/07/logo/b25c75bcd2604a9da1bc-logo_1.png"
-                alt="Okie Dokie"
-                className="h-8 w-8 rounded-lg"
-              />
-              <span className="text-lg font-semibold text-muted">Okie Dokie</span>
-            </div>
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-okiedokie.png"
+              alt="Okie Dokie Campus Automation"
+              className="h-14 w-14 rounded-full sm:h-16 sm:w-16"
+            />
             <p className="text-sm text-muted">
               &copy; {new Date().getFullYear()} Okie Dokie. All rights reserved.
             </p>
