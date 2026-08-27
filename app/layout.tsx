@@ -22,7 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://okiedokie-erp-images.s3.ap-south-1.amazonaws.com/RKSDCK/2023/07/logo/59b4898e508e48f834fb-304964661_410091617923325_636038283123227638_n.jpeg"
+                src="/logo-rksd.png"
                 alt="R K S D College"
                 className="h-16 w-16 shrink-0 rounded-full border border-border object-cover sm:h-20 sm:w-20"
               />
