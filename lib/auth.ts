@@ -25,3 +25,12 @@ export async function resolveMentorFromMobile(
 
   return { mentorName: match?.name ?? "Admin", isAdmin };
 }
+
+// Strict admin-only check — used by the dedicated /admin entry point, which
+// should reject a mentor's mobile even though the general mentor entry point
+// would happily grant *admin* rights to the same number if it's allowlisted.
+export function isAdminMobile(mobile: string): boolean {
+  const normalized = normalizeMobile(mobile);
+  if (!normalized) return false;
+  return ADMIN_MOBILES.some((m) => normalizeMobile(m) === normalized);
+}

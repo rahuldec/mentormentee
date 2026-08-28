@@ -17,12 +17,13 @@ async function hasValidSession(token?: string): Promise<boolean> {
 
 export async function proxy(request: NextRequest) {
   const isLoggedIn = await hasValidSession(request.cookies.get("session")?.value);
-  const isRoot = request.nextUrl.pathname === "/";
+  const isSelfServeEntry =
+    request.nextUrl.pathname === "/" || request.nextUrl.pathname === "/admin";
 
-  // The root path handles its own auto-login (and its own "no access" state
-  // when there's no mobile param either) — never redirect away from it, or
-  // a plain "/" visit with no session would redirect to itself in a loop.
-  if (!isLoggedIn && !isRoot) {
+  // "/" and "/admin" handle their own auto-login (and their own "no access"
+  // state when there's no mobile param either) — never redirect away from
+  // them, or a plain visit with no session would redirect to itself in a loop.
+  if (!isLoggedIn && !isSelfServeEntry) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
