@@ -4,6 +4,12 @@ export type MenteeRow = {
   srNo: number;
   rollNo: string;
   studentName?: string;
+  mentorMobile?: string;
+};
+
+export type MentorContact = {
+  name: string;
+  mobile: string;
 };
 
 export type Remark = {

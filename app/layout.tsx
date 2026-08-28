@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { getSession } from "@/lib/session";
+import { logout } from "@/lib/actions";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -13,12 +15,14 @@ export const metadata: Metadata = {
   description: "Mentor-mentee roster lookup",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await getSession();
+
   return (
     <html lang="en" className={`${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <header className="border-b border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
             <Link href="/" className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -39,6 +43,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </div>
               </div>
             </Link>
+            {session && (
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="hidden text-sm text-muted sm:inline">
+                  {session.isAdmin ? "Admin" : session.mentorName}
+                </span>
+                <form action={logout}>
+                  <button
+                    type="submit"
+                    className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-background"
+                  >
+                    Log out
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
           <div className="h-1 bg-accent" />
         </header>
