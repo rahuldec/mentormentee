@@ -2,11 +2,50 @@ import { unstable_cache } from "next/cache";
 import type { AttendanceSummary, ExaminationResult, StudentProfile } from "./types";
 
 const ENTITY_ID = process.env.ERP_ENTITY_ID;
-const API_TOKEN = process.env.ERP_API_TOKEN;
+const ERP_MOBILE = process.env.ERP_LOGIN_MOBILE;
+const ERP_PASSWORD = process.env.ERP_LOGIN_PASSWORD;
+const LOGIN_URL = "https://others-api.odpay.in/login";
 const API_URL = "https://others-api.odpay.in/api/list/student";
 const ACADEMIC_API_URL = "https://academic-api.odpay.in/api";
 const SESSION = "2026-27 Odd";
 const SESSION_START = "2026-07-01T00:00:00.000Z";
+
+// The ERP invalidates a token whenever that account logs in anywhere else
+// (tokenVersion bump), so a copy-pasted browser token breaks unpredictably.
+// Logging in ourselves with stored credentials and caching the result keeps
+// the app self-sufficient — nothing else should ever log into this account.
+async function fetchApiTokenUncached(): Promise<string> {
+  if (!ERP_MOBILE || !ERP_PASSWORD) {
+    throw new Error("ERP_LOGIN_MOBILE or ERP_LOGIN_PASSWORD is not set");
+  }
+
+  const res = await fetch(LOGIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mobile: ERP_MOBILE, password: ERP_PASSWORD }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`ERP login failed: ${res.status} ${res.statusText}`);
+  }
+
+  const json = (await res.json()) as { token?: string };
+  if (!json.token) {
+    throw new Error("ERP login response did not include a token");
+  }
+
+  return json.token;
+}
+
+const fetchApiToken = unstable_cache(fetchApiTokenUncached, ["erp-token"], {
+  revalidate: 21600, // 6 hours
+  tags: ["erp-token"],
+});
+
+async function getApiToken(): Promise<string> {
+  return fetchApiToken();
+}
 
 // First-year courses/streams covering all three source streams (Commerce, BSc+BCA, BA).
 // Scoped to Sem 1 for now — this mirrors the "First Year 2026-27" mentor roster.
@@ -162,14 +201,14 @@ function toProfile(s: ErpStudent): StudentProfile {
 }
 
 async function fetchAllStudentsUncached(): Promise<StudentProfile[]> {
-  if (!ENTITY_ID || !API_TOKEN) {
-    throw new Error("ERP_ENTITY_ID or ERP_API_TOKEN is not set");
+  if (!ENTITY_ID) {
+    throw new Error("ERP_ENTITY_ID is not set");
   }
 
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {
-      Authorization: API_TOKEN,
+      Authorization: await getApiToken(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -260,19 +299,20 @@ function decodeTokenEmployeeId(token: string): string {
 }
 
 async function fetchSubjectCourseMapUncached(): Promise<CourseSubjectMapEntry[]> {
-  if (!ENTITY_ID || !API_TOKEN) {
-    throw new Error("ERP_ENTITY_ID or ERP_API_TOKEN is not set");
+  if (!ENTITY_ID) {
+    throw new Error("ERP_ENTITY_ID is not set");
   }
 
+  const token = await getApiToken();
   const url = new URL(`${ACADEMIC_API_URL}/getCoursesByTeacher/subjectCourseMapping`);
   url.searchParams.set("entity", ENTITY_ID);
   url.searchParams.set("session", SESSION);
-  url.searchParams.set("teacher", decodeTokenEmployeeId(API_TOKEN));
+  url.searchParams.set("teacher", decodeTokenEmployeeId(token));
   url.searchParams.set("isAdmin", "true");
   url.searchParams.set("attendanceType", "lectureWise");
 
   const res = await fetch(url.toString(), {
-    headers: { Authorization: API_TOKEN },
+    headers: { Authorization: token },
     cache: "no-store",
   });
 
@@ -298,7 +338,7 @@ async function fetchExamTopicsUncached(
 ): Promise<RawExamTopic[]> {
   const res = await fetch(`${ACADEMIC_API_URL}/getTopics/classTest`, {
     method: "POST",
-    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    headers: { Authorization: await getApiToken(), "Content-Type": "application/json" },
     body: JSON.stringify({ entity: ENTITY_ID, session: SESSION, course, stream, batch, section, subject }),
     cache: "no-store",
   });
@@ -325,7 +365,7 @@ async function fetchExamMarksUncached(
 ): Promise<RawStudentMarkRow[]> {
   const res = await fetch(`${ACADEMIC_API_URL}/getStudents/classTest`, {
     method: "POST",
-    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    headers: { Authorization: await getApiToken(), "Content-Type": "application/json" },
     body: JSON.stringify({
       entity: ENTITY_ID,
       session: SESSION,
@@ -442,7 +482,7 @@ async function fetchAttendanceUncached(
 ): Promise<RawAttendanceRow[]> {
   const res = await fetch(`${ACADEMIC_API_URL}/studentWiseNotMarkedReport/studentAttendanceV3`, {
     method: "POST",
-    headers: { Authorization: API_TOKEN!, "Content-Type": "application/json" },
+    headers: { Authorization: await getApiToken(), "Content-Type": "application/json" },
     body: JSON.stringify({
       entity: ENTITY_ID,
       session: SESSION,
