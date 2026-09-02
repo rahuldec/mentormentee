@@ -1,4 +1,5 @@
-import type { AttendanceSummary, ExaminationResult, StudentProfile } from "@/lib/types";
+import type { AttendanceSummary, ExaminationResult, MenteeNote, StudentProfile } from "@/lib/types";
+import { NotesSection } from "./NotesSection";
 
 const IST = "Asia/Kolkata";
 
@@ -36,12 +37,14 @@ export function ContactCard({
   profile,
   examinations = [],
   attendance = null,
+  notes = [],
 }: {
   rollNo: string;
   mentorName?: string;
   profile: StudentProfile | null;
   examinations?: ExaminationResult[];
   attendance?: AttendanceSummary | null;
+  notes?: MenteeNote[];
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -92,6 +95,8 @@ export function ContactCard({
             No ERP record found for this roll number — showing roster data only.
           </p>
         )}
+
+        <NotesSection rollNo={rollNo} initialNotes={notes} />
 
         {profile && (
           <>

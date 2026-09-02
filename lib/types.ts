@@ -12,6 +12,14 @@ export type MentorContact = {
   mobile: string;
 };
 
+export type MenteeNote = {
+  id: string;
+  rollNo: string;
+  mentorName: string;
+  text: string;
+  createdAt: string;
+};
+
 export type Remark = {
   date: string | null;
   remark: string;

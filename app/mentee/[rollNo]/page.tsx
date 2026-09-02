@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getRoster } from "@/lib/sheets";
 import { getStudentByRollNo, getExaminationsForStudent, getAttendanceForStudent } from "@/lib/erp";
 import { getSession } from "@/lib/session";
+import { getNotes } from "@/lib/notes";
 import { ContactCard } from "@/components/ContactCard";
 
 export default async function MenteePage({
@@ -20,13 +21,14 @@ export default async function MenteePage({
 
   const isMyMentee = session.isAdmin || menteeRow?.mentorName === session.mentorName;
 
-  const [profile, examinations, attendance] = isMyMentee
+  const [profile, examinations, attendance, notes] = isMyMentee
     ? await Promise.all([
         getStudentByRollNo(rollNo).catch(() => null),
         getExaminationsForStudent(rollNo).catch(() => []),
         getAttendanceForStudent(rollNo).catch(() => null),
+        getNotes(rollNo).catch(() => []),
       ])
-    : [null, [], null];
+    : [null, [], null, []];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
@@ -49,6 +51,7 @@ export default async function MenteePage({
           profile={profile}
           examinations={examinations}
           attendance={attendance}
+          notes={notes}
         />
       )}
     </div>
