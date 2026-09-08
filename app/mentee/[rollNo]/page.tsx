@@ -5,6 +5,7 @@ import { getStudentByRollNo, getExaminationsForStudent, getAttendanceForStudent 
 import { getSession } from "@/lib/session";
 import { getNotes } from "@/lib/notes";
 import { ContactCard } from "@/components/ContactCard";
+import { RefreshButton } from "@/components/RefreshButton";
 
 export default async function MenteePage({
   params,
@@ -32,9 +33,12 @@ export default async function MenteePage({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
-      <Link href="/" className="text-sm text-muted hover:text-foreground">
-        ← Back to roster
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-sm text-muted hover:text-foreground">
+          ← Back to roster
+        </Link>
+        {isMyMentee && <RefreshButton />}
+      </div>
 
       {!isMyMentee ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

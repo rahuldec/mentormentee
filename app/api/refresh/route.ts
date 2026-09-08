@@ -8,6 +8,17 @@ export async function POST() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  revalidateTag("roster", { expire: 0 });
-  return NextResponse.json({ revalidated: true, now: Date.now() });
+  const tags = [
+    "roster",
+    "erp-students-v2",
+    "subject-course-map",
+    "exam-topics",
+    "exam-marks",
+    "attendance",
+  ];
+  for (const tag of tags) {
+    revalidateTag(tag, { expire: 0 });
+  }
+
+  return NextResponse.json({ revalidated: true, tags, now: Date.now() });
 }
