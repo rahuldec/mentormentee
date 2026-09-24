@@ -26,18 +26,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="flex items-center gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo-rksd.png"
-                alt="R K S D College"
-                className="h-16 w-16 shrink-0 rounded-full border border-border object-cover sm:h-20 sm:w-20"
+                src="/logo-okiedokie.png"
+                alt="Okie Dokie"
+                className="h-16 w-16 shrink-0 object-contain sm:h-20 sm:w-20"
               />
               <div className="leading-tight">
                 <div className="text-xl font-semibold text-foreground sm:text-2xl">
-                  R K S D College
+                  Okie Dokie
                 </div>
-                <div className="text-xs text-muted sm:text-sm">
-                  (&ldquo;A&rdquo; Grade, NAAC Accredited) &middot; Affiliated to Kurukshetra
-                  University, Kurukshetra
-                </div>
+                <div className="text-xs text-muted sm:text-sm">Campus Automation Partner</div>
                 <div className="mt-0.5 text-sm font-medium text-accent sm:text-base">
                   Mentor Mentee Program
                 </div>
@@ -62,14 +59,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <div className="h-1 bg-accent" />
         </header>
         <main className="flex flex-1 flex-col">{children}</main>
-        <footer className="border-t border-border bg-surface px-6 py-8">
-          <div className="mx-auto flex max-w-5xl flex-col items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-okiedokie.png"
-              alt="Okie Dokie Campus Automation"
-              className="h-14 w-14 rounded-full sm:h-16 sm:w-16"
-            />
+        <footer className="border-t border-border bg-surface px-6 py-6">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-1">
             <p className="text-sm text-muted">
               &copy; {new Date().getFullYear()} Okie Dokie. All rights reserved.
             </p>
