@@ -46,59 +46,15 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ""));
 }
 
-// Different colleges' roster sheets don't share a column layout (some have
-// no Subject column at all, or a different order), so columns are matched
-// by header name rather than fixed position.
-function normalizeHeader(h: string): string {
-  return h.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-const HEADER_ALIASES = {
-  mentor: ["nameofmentor", "mentorname", "mentor"],
-  subject: ["subject"],
-  srNo: ["srno", "sno"],
-  rollNo: ["collegerollno", "studentrollno", "rollno", "rollnumber"],
-  mobile: ["mobilenumber", "loginmobile", "mentormobile", "mobile"],
-};
-
-function findColumnIndex(headerRow: string[], aliases: string[]): number {
-  const normalized = headerRow.map(normalizeHeader);
-  for (const alias of aliases) {
-    const idx = normalized.indexOf(alias);
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
-
 function toRosterRows(csvRows: string[][]): MenteeRow[] {
-  const [headerRow, ...dataRows] = csvRows;
-  if (!headerRow) return [];
-
-  const col = {
-    mentor: findColumnIndex(headerRow, HEADER_ALIASES.mentor),
-    subject: findColumnIndex(headerRow, HEADER_ALIASES.subject),
-    srNo: findColumnIndex(headerRow, HEADER_ALIASES.srNo),
-    rollNo: findColumnIndex(headerRow, HEADER_ALIASES.rollNo),
-    mobile: findColumnIndex(headerRow, HEADER_ALIASES.mobile),
-  };
-
-  if (col.mentor === -1 || col.rollNo === -1) {
-    throw new Error(
-      "Roster sheet is missing a mentor-name or roll-number column (checked common header names)"
-    );
-  }
-
+  const [, ...dataRows] = csvRows; // drop header row
   const result: MenteeRow[] = [];
   let currentMentor = "";
   let currentSubject = "";
   let currentMentorMobile = "";
 
   for (const cells of dataRows) {
-    const mentorCell = cells[col.mentor];
-    const subjectCell = col.subject !== -1 ? cells[col.subject] : undefined;
-    const srNoCell = col.srNo !== -1 ? cells[col.srNo] : undefined;
-    const rollNoCell = cells[col.rollNo];
-    const mobileCell = col.mobile !== -1 ? cells[col.mobile] : undefined;
+    const [mentorCell, subjectCell, srNoCell, rollNoCell, mobileCell] = cells;
 
     if (mentorCell?.trim()) {
       currentMentor = mentorCell.trim();
