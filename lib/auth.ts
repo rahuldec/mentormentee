@@ -1,7 +1,7 @@
 import "server-only";
-import { getMentors } from "./sheets";
+import { getMentors, getAdminMobiles } from "./sheets";
 
-const ADMIN_MOBILES = (process.env.ADMIN_MOBILES ?? "")
+const ENV_ADMIN_MOBILES = (process.env.ADMIN_MOBILES ?? "")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
@@ -16,9 +16,12 @@ export async function resolveMentorFromMobile(
   const normalized = normalizeMobile(mobile);
   if (!normalized) return null;
 
-  const isAdmin = ADMIN_MOBILES.some((m) => normalizeMobile(m) === normalized);
+  const [mentors, sheetAdminMobiles] = await Promise.all([getMentors(), getAdminMobiles()]);
 
-  const mentors = await getMentors();
+  const isAdmin =
+    ENV_ADMIN_MOBILES.some((m) => normalizeMobile(m) === normalized) ||
+    sheetAdminMobiles.some((m) => normalizeMobile(m) === normalized);
+
   const match = mentors.find((m) => normalizeMobile(m.mobile) === normalized);
 
   if (!match && !isAdmin) return null;

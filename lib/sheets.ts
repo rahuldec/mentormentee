@@ -106,3 +106,25 @@ export async function getMentors(): Promise<MentorContact[]> {
   }
   return Array.from(byName, ([name, mobile]) => ({ name, mobile }));
 }
+
+// Reads all non-empty values from columns F and G (index 5 & 6) of the roster
+// sheet. Any mobile number found there is treated as an admin.
+export async function getAdminMobiles(): Promise<string[]> {
+  if (!SHEET_ID) return [];
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${ROSTER_GID}`;
+  const res = await fetch(url, {
+    next: { revalidate: 300, tags: ["roster"] },
+  });
+  if (!res.ok) return [];
+
+  const rows = parseCsv(await res.text());
+  const mobiles: string[] = [];
+  for (const cells of rows) {
+    const f = cells[5]?.trim();
+    const g = cells[6]?.trim();
+    if (f) mobiles.push(f);
+    if (g) mobiles.push(g);
+  }
+  return mobiles;
+}
