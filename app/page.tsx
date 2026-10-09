@@ -8,29 +8,18 @@ import { StatCard } from "@/components/StatCard";
 import type { MenteeRow } from "@/lib/types";
 
 export default async function Home(props: PageProps<"/">) {
-  const session = await getSession();
+  let session = await getSession();
 
   if (!session) {
     const params = await props.searchParams;
     const mobile = typeof params.mobile === "string" ? params.mobile : undefined;
 
-    // Cookies can only be set from a Route Handler/Server Action, not a
-    // page's render, so hand off to one that does the lookup + sets the
-    // session, then bounces back here.
     if (mobile) {
       redirect(`/api/enter?mobile=${encodeURIComponent(mobile)}`);
     }
 
-    return (
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-        <h1 className="text-lg font-semibold text-foreground">Access unavailable</h1>
-        <p className="mt-2 text-sm text-muted">
-          Open this from the Okie Dokie app to see your mentees. If you got here another way,
-          the link may be missing your mobile number, or you may not be set up as a mentor yet —
-          contact the admin.
-        </p>
-      </div>
-    );
+    // No session — treat as public admin view (full roster visible to anyone)
+    session = { mentorName: "", isAdmin: true };
   }
 
   let rows: MenteeRow[] = [];
