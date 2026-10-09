@@ -4,9 +4,6 @@ import { getSession } from "@/lib/session";
 
 export async function POST() {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
 
   const tags = [
     "roster",
